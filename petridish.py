@@ -11,7 +11,6 @@ import pygame
 from pygame.locals import *
 import numpy
 import re
-from itertools import cycle
 
 class Application:
   """ Core application class.  Eveything is in this. """
@@ -29,7 +28,6 @@ class Application:
     self.margin = 1
     self.neighborhood_select = False# True: von Neumann, False: Moore
     self.count_self = False
-    self.rulestring = "B3/S23"
     self.radiusstring = "1"
     self.radius = 1
     self.ui_focus = "none"
@@ -38,11 +36,28 @@ class Application:
     self.radiuserror = False
     self.screenregions = {}
     self.boardcells = {}
-    self.cellstates = ['white', 'navy']
+    self.ruleset = "wireworld" #Options are: conway, brian, wireworld
+    self.cellstates = ["white", "navy", "maroon", "gold", "darkgreen"]
     self.rulefocus = False
     self.radiusfocus = False
     self.neighborhood = ""
     self.rules = ()
+    self.cellnumbers = False
+
+    if self.ruleset == "conway":
+      # This is the typical ruleset for Conway's Game of Life
+      self.totalcellstates = 2
+      self.rulestring = "B3/S23"
+    elif self.ruleset == "brian":
+      # Brian's Brain - Three cell states: Alive, dying and dead. Once alive,
+      # will always proceed to dying and then dead
+      self.totalcellstates = 2
+      self.rulestring = "B2/"
+    elif self.ruleset == "wireworld":
+      # Wireworld - Four cell states: Empty space, Electron head, Electron tail, and Conductor
+      # Can be used for some simple, nifty electronics demos
+      self.totalcellstates = 4
+      self.rulestring = "B12/"
 
     self.grid_size = (self.block_size + self.margin)
     self.cols = self.board_weight / self.grid_size
@@ -208,6 +223,8 @@ class Application:
       else:
         self.oldgrid = numpy.copy(self.grid)
         self.grid = numpy.copy(self.newgrid)
+      if self.count == 2:
+        self.playing = False
 
   def on_render(self):
     """"""
@@ -251,7 +268,7 @@ class Application:
     while( self._running ):
       for event in pygame.event.get():
         self.on_event(event)
-      self.clock.tick(50)
+      self.clock.tick(80)
       self.on_loop()
       self.on_render()
     self.on_cleanup()
@@ -332,7 +349,8 @@ class Application:
     for c in xrange(self.cols):
       for r in xrange(self.rows):
         pygame.draw.rect(self._display_surf, pygame.Color(self.cellstates[self.grid[r,c]]), (c*self.grid_size, (r*self.grid_size)+self.menubar_size, self.block_size, self.block_size))
-        #self._display_surf.blit(self.fontobject.render(str(self.grid[r,c]), 1, pygame.Color("black")), (c*self.grid_size+4, (r*self.grid_size)+self.menubar_size+2))
+        if self.cellnumbers:
+          self._display_surf.blit(self.fontobject.render(str(self.grid[r,c]), 1, pygame.Color("black")), (c*self.grid_size+4, (r*self.grid_size)+self.menubar_size+2))
 
   def check_clicked(self, position):
     """"""
@@ -405,7 +423,7 @@ class Application:
 
   def ui_cell_toggle(self, cell):
     """"""
-    self.grid[cell] = (self.grid[cell]+1)%len(self.cellstates)
+    self.grid[cell] = (self.grid[cell]+1)%self.totalcellstates
 
   def on_play(self):
     """"""
@@ -493,19 +511,49 @@ class Application:
   def updateCell(self, cellstate, neighbors):
     """given the state of a cell and its neighbors, based on some rules, update the cell"""
     birth, survive = self.rules
-    if cellstate == 0:
-      if sum(neighbors) in birth:
-        return 1 #"dead -> alive"
+    if self.ruleset == "conway":
+      if cellstate == 0:
+        if neighbors.count(1) in birth:
+          return 1 #"dead -> alive"
+        else:
+          return 0 #"dead -> dead"
+      elif cellstate == 1:
+        if neighbors.count(1) in survive:
+          return 1 #"alive -> alive"
+        else:
+          return 0 #"alive -> dead"
       else:
-        return 0 #"dead -> dead"
-    elif cellstate == 1:
-      if sum(neighbors) in survive:
-        return 1 #"alive -> alive"
+        print "State not accounted for"
+        self.playing = False
+    elif self.ruleset == "brian":
+      if cellstate == 0:
+        if neighbors.count(1) in birth:
+          return 1 #"dead -> alive"
+        else:
+          return 0 #"dead -> dead"
+      elif cellstate == 1:
+        return 2 #"alive -> dying"
+      if cellstate == 2:
+          return 0 #"dying -> dead"
       else:
-        return 0 #"alive -> dead"
+        print "State not accounted for"
+        self.playing = False
+    elif self.ruleset == "wireworld":
+      if cellstate == 0:
+        return 0 # "empty space"
+      elif cellstate == 1:
+        return 2 # "electron head -> electron tail"
+      elif cellstate == 2:
+        return 3 #"electron tail -> conductor"
+      elif cellstate == 3:
+        if neighbors.count(1) in birth:
+          return 1 #"conductor -> electron head"
+        else:
+          return 3 #"conductor -> conductor"
     else:
-      print "State not accounted for"
+      print "Unknown ruleset."
       self.playing = False
+
 
 if __name__ == "__main__" :
   PetriDish = Application()
