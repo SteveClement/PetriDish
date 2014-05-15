@@ -12,8 +12,8 @@ It has **not** been tested in Python 3, and probably wont work.
 
 PetriDish has two main module dependencies:
 
-* [pygame](http://www.numpy.org/)
-* [numpy](http://www.pygame.org/)
+* [numpy](http://www.numpy.org/)
+* [pygame](http://www.pygame.org/)
 
 ## Usage
 
