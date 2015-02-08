@@ -1,6 +1,6 @@
 """
   Petri Dish (a cellular automaton simulator)
-  Developed by Rion Parsons <kharidiron@gmail.com>
+  Developed by Kharidiron <kharidiron@gmail.com>
   Created: Aug 15, 2013
   Last modified: August 15, 2013
   @author: Rion Parsons
