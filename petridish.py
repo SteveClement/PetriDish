@@ -60,8 +60,8 @@ class Application:
       self.rulestring = "B12/"
 
     self.grid_size = (self.block_size + self.margin)
-    self.cols = self.board_weight / self.grid_size
-    self.rows = self.board_height / self.grid_size
+    self.cols = int(self.board_weight / self.grid_size)
+    self.rows = int(self.board_height / self.grid_size)
     self.grid = numpy.zeros(self.cols*self.rows, dtype="int").reshape(self.rows, self.cols)
     self.newgrid = numpy.zeros(self.cols*self.rows, dtype="int").reshape(self.rows, self.cols)
     self.oldgrid = numpy.zeros(self.cols*self.rows, dtype="int").reshape(self.rows, self.cols)
@@ -105,7 +105,7 @@ class Application:
         if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
           self.ui_focus = "none"
         elif event.key == pygame.K_BACKSPACE:
-          exec "self."+ self.ui_focus +" = self."+ self.ui_focus +"[0:-1]"
+          exec("self."+ self.ui_focus +" = self."+ self.ui_focus +"[0:-1]")
         else:
           if not self.shifted:
             if event.key == K_a: keyvalue += "a"
@@ -203,7 +203,7 @@ class Application:
             elif event.key == K_COMMA: keyvalue += "<"
             elif event.key == K_PERIOD: keyvalue += ">"
             elif event.key == K_SLASH: keyvalue += "?"
-          exec "self."+self.ui_focus+" += keyvalue"
+          exec("self."+self.ui_focus+" += keyvalue")
     elif event.type == pygame.MOUSEBUTTONUP:
       if event.button == 1:
         mouseposition = pygame.mouse.get_pos()
@@ -215,10 +215,10 @@ class Application:
       self.count = self.count + 1
       self.evolveBoard()
       if numpy.array_equal(self.grid, self.newgrid):
-        print "No evolution is occuring stead-state static"
+        print("No evolution is occuring stead-state static")
         self.playing = False
       elif numpy.array_equal(self.oldgrid, self.newgrid):
-        print "No evolution is occuring: stead-state oscillatory"
+        print("No evolution is occuring: stead-state oscillatory")
         self.playing = False
       else:
         self.oldgrid = numpy.copy(self.grid)
@@ -338,16 +338,16 @@ class Application:
     """"""
     boardcells = {}
     gameboard = pygame.draw.rect(self._display_surf, pygame.Color("black"), position+size)
-    for c in xrange(self.cols):
-      for r in xrange(self.rows):
+    for c in range(self.cols):
+      for r in range(self.rows):
         boardcells[(r, c)] = pygame.draw.rect(self._display_surf, pygame.Color("white"), (c*self.grid_size, (r*self.grid_size)+self.menubar_size, self.block_size, self.block_size))
     return (gameboard, boardcells)
 
   def draw_gameboard(self, position, size):
     """"""
     pygame.draw.rect(self._display_surf, pygame.Color("black"), position+size)
-    for c in xrange(self.cols):
-      for r in xrange(self.rows):
+    for c in range(self.cols):
+      for r in range(self.rows):
         pygame.draw.rect(self._display_surf, pygame.Color(self.cellstates[self.grid[r,c]]), (c*self.grid_size, (r*self.grid_size)+self.menubar_size, self.block_size, self.block_size))
         if self.cellnumbers:
           self._display_surf.blit(self.fontobject.render(str(self.grid[r,c]), 1, pygame.Color("black")), (c*self.grid_size+4, (r*self.grid_size)+self.menubar_size+2))
@@ -358,15 +358,15 @@ class Application:
       self.ui_focus = "none"
       self.rulefocus = False
       self.radiusfocus = False
-      for screenelement, screenregion in self.screenregions.items():
+      for screenelement, screenregion in list(self.screenregions.items()):
         if screenregion.collidepoint(position):
           if screenelement == "menu":
-            for element, region in self.menubar.items():
+            for element, region in list(self.menubar.items()):
               if region.collidepoint(position):
-                exec "self."+element+"()"
+                exec("self."+element+"()")
                 break
           elif screenelement == "board":
-            for element, region in self.boardcells.items():
+            for element, region in list(self.boardcells.items()):
               if region.collidepoint(position):
                 self.ui_cell_toggle(element)
                 break
@@ -431,14 +431,14 @@ class Application:
     self.radiuserror = False
     rulepattern = re.compile("(([BS]|)\d*)/(([BS]|)\d*)")
     if not rulepattern.match( self.rulestring ):
-      print "Bad rule format"
+      print("Bad rule format")
       self.ruleerror = True
       return -1
     self.rules  = self.inputToRules()
 
     radiuspattern = re.compile("\d{1}")
     if len(self.radiusstring) > 1 or not radiuspattern.match( self.radiusstring ):
-      print "Bad radius format"
+      print("Bad radius format")
       self.radiuserror = True
       return -1
     self.radius = int(self.radiusstring)
@@ -461,22 +461,22 @@ class Application:
     rules = re.split("/",self.rulestring)
     if len(rules) == 2:
       if len(rules[0]) < 1 or rules[0][0] != "B": #"S/B style:"
-        birth = map(int,list(rules[1][:]))
-        survive = map(int,list(rules[0][:]))
+        birth = list(map(int,list(rules[1][:])))
+        survive = list(map(int,list(rules[0][:])))
       else: #"B/S style:"
-        birth = map(int,list(rules[0][1:]))
-        survive = map(int,list(rules[1][1:]))
+        birth = list(map(int,list(rules[0][1:])))
+        survive = list(map(int,list(rules[1][1:])))
       return (birth, survive)
     else:
-      print "Bad rule format"
+      print("Bad rule format")
       self.ruleerror = True
       return -1
  
   def getNeighborhood(self):
     """base on a neighborhood type and radius, determine the equation that describes all the neighbors locations"""
     neighborhood = "["
-    for ry in xrange(-self.radius,self.radius+1,1):
-      for rx in xrange(-self.radius,self.radius+1,1):
+    for ry in range(-self.radius,self.radius+1,1):
+      for rx in range(-self.radius,self.radius+1,1):
         if ((ry != 0) or (rx != 0)):
           if (self.neighborhood_select):
             if ((abs(rx) + abs(ry)) <= self.radius):
@@ -496,9 +496,9 @@ class Application:
     scratchgrid = numpy.hstack((self.grid[:,-self.radius:], self.grid, self.grid[:,:self.radius]))
     scratchgrid = numpy.vstack((scratchgrid[-self.radius:,:], scratchgrid, scratchgrid[:self.radius,:]))
     scratchgrid2 = numpy.copy(scratchgrid)
-    for c in xrange(self.cols):
+    for c in range(self.cols):
       cc = c + self.radius
-      for r in xrange(self.rows):
+      for r in range(self.rows):
         rr = r + self.radius
         neighbors = eval(self.neighborhood)
         if self.count_self:
@@ -523,7 +523,7 @@ class Application:
         else:
           return 0 #"alive -> dead"
       else:
-        print "State not accounted for"
+        print("State not accounted for")
         self.playing = False
     elif self.ruleset == "brian":
       if cellstate == 0:
@@ -536,7 +536,7 @@ class Application:
       if cellstate == 2:
           return 0 #"dying -> dead"
       else:
-        print "State not accounted for"
+        print("State not accounted for")
         self.playing = False
     elif self.ruleset == "wireworld":
       if cellstate == 0:
@@ -551,7 +551,7 @@ class Application:
         else:
           return 3 #"conductor -> conductor"
     else:
-      print "Unknown ruleset."
+      print("Unknown ruleset.")
       self.playing = False
 
 
